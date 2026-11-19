@@ -1,0 +1,10 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+export default function ReviewPage({ params }: { params: Promise<{ restaurantId: string }> }) {
+  const router = useRouter(); const [id, setId] = useState(""); const [name, setName] = useState("Restaurant"); const [rating, setRating] = useState<number | null>(null); const [comment, setComment] = useState(""); const [error, setError] = useState(""); const [submitting, setSubmitting] = useState(false);
+  useEffect(() => { params.then(({ restaurantId }) => { setId(restaurantId); fetch(`/api/restaurants/${restaurantId}`).then(response => response.ok ? response.json() : null).then(data => data && setName(data.name)); }); }, [params]);
+  async function submit(event: React.FormEvent) { event.preventDefault(); if (!rating || !comment.trim()) return; setSubmitting(true); setError(""); const response = await fetch("/api/reviews", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: Number(id), rating, comment }) }); if (!response.ok) { const data = await response.json(); setError(data.error); setSubmitting(false); return; } router.push(`/restaurant/${id}`); }
+  return <main><p className="eyebrow">Your review</p><h1>{name}</h1><p className="muted">Choose a rating, then tell us a little more.</p><form onSubmit={submit}><div className="stars" aria-label="Choose a rating">{[1, 2, 3, 4, 5].map(star => <button type="button" className={`star ${rating === star ? "selected" : ""}`} aria-label={`${star} star${star > 1 ? "s" : ""}`} aria-pressed={rating === star} onClick={() => setRating(star)} key={star}>★</button>)}</div><label htmlFor="comment">Your comment</label><textarea id="comment" value={comment} onChange={event => setComment(event.target.value)} placeholder="What stood out?" />{error && <p className="error">{error}</p>}<button type="submit" disabled={!rating || !comment.trim() || submitting}>{submitting ? "Sending…" : "Submit review"}</button></form></main>;
+}

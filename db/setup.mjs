@@ -1,0 +1,10 @@
+import { neon } from "@neondatabase/serverless";
+if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not configured.");
+const sql = neon(process.env.DATABASE_URL);
+await sql`CREATE TABLE IF NOT EXISTS restaurants (id SERIAL PRIMARY KEY, name TEXT NOT NULL, cuisine TEXT NOT NULL, area TEXT NOT NULL)`;
+await sql`CREATE TABLE IF NOT EXISTS reviews (id SERIAL PRIMARY KEY, restaurant_id INTEGER NOT NULL REFERENCES restaurants(id), rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), comment TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+let [restaurant] = await sql`SELECT id FROM restaurants WHERE name = 'Bandra Burrito' AND area = 'Bandra West' LIMIT 1`;
+if (!restaurant) [restaurant] = await sql`INSERT INTO restaurants (name, cuisine, area) VALUES ('Bandra Burrito', 'Indian', 'Bandra West') RETURNING id`;
+const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM reviews WHERE restaurant_id = ${restaurant.id}`;
+if (count === 0) await sql`INSERT INTO reviews (restaurant_id, rating, comment, created_at) VALUES (${restaurant.id}, 5, 'Paneer burrito is unreal', NOW() - INTERVAL '8 days'), (${restaurant.id}, 4, 'Good, but slow service', NOW() - INTERVAL '6 days'), (${restaurant.id}, 4, 'Solid. Would repeat.', NOW() - INTERVAL '2 days')`;
+console.log({ restaurants: await sql`SELECT * FROM restaurants`, reviews: await sql`SELECT * FROM reviews ORDER BY created_at ASC` });
