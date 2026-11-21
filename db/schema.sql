@@ -1,14 +1,5 @@
-CREATE TABLE restaurants (
-  id        SERIAL PRIMARY KEY,
-  name      TEXT NOT NULL,
-  cuisine   TEXT NOT NULL,
-  area      TEXT NOT NULL
-);
-
-CREATE TABLE reviews (
-  id            SERIAL PRIMARY KEY,
-  restaurant_id INTEGER NOT NULL REFERENCES restaurants(id),
-  rating        INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
-  comment       TEXT NOT NULL,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+CREATE TABLE restaurants (id SERIAL PRIMARY KEY, name TEXT NOT NULL, cuisine TEXT NOT NULL, area TEXT NOT NULL, diet TEXT NOT NULL CHECK (diet IN ('veg','non-veg')), price_for_two INTEGER NOT NULL, description TEXT NOT NULL);
+CREATE TABLE restaurant_images (id SERIAL PRIMARY KEY, restaurant_id INTEGER NOT NULL REFERENCES restaurants(id), url TEXT NOT NULL, caption TEXT, position INTEGER NOT NULL);
+CREATE TABLE reviews (id SERIAL PRIMARY KEY, restaurant_id INTEGER NOT NULL REFERENCES restaurants(id), rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5), comment TEXT NOT NULL, author_name TEXT, food_rating INTEGER, service_rating INTEGER, atmosphere_rating INTEGER, visit_type TEXT, meal TEXT, spend_band TEXT, group_sizes TEXT[], created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+CREATE TABLE review_details (review_id INTEGER PRIMARY KEY REFERENCES reviews(id), veg_recommendation TEXT, veg_offerings TEXT, veg_notes TEXT, dietary_notes TEXT, parking_rating TEXT, parking_options TEXT, parking_notes TEXT, kids_notes TEXT, wheelchair_notes TEXT);
+CREATE TABLE review_votes (id SERIAL PRIMARY KEY, review_id INTEGER NOT NULL REFERENCES reviews(id), voter_id TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(review_id,voter_id));
